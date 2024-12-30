@@ -36,8 +36,8 @@ Another example whould be a device where we measure its power consumption but we
 
 ## Future work
 
-- [*] Live-update the device states from Home Assistant.
-- [*] Live-update the power meter measurements.
+- [x] Live-update the device states from Home Assistant.
+- [x] Live-update the power meter measurements.
 - [ ] Allow for sub-metering (i.e. measuring Phase A and also a washing machine connected to Phase A).
 - [ ] Provide other device consumption models.
 - [ ] Metered device without state in Home Assistant.
