@@ -45,3 +45,10 @@ Another example whould be a device where we measure its power consumption but we
 - [ ] User-friendly UI.
 - [ ] Replay of historical data.
 
+## Using it
+
+```bash
+uv run python -m energista devices.yml
+```
+
+

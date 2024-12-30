@@ -1,0 +1,1796 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title></title>
+<style type="text/css">
+.ansi2html-content { display: inline; white-space: pre-wrap; word-wrap: break-word; }
+.body_foreground { color: #000000; }
+.body_background { background-color: #AAAAAA; }
+.inv_foreground { color: #AAAAAA; }
+.inv_background { background-color: #000000; }
+.ansi1 { font-weight: bold; }
+.ansi3 { font-style: italic; }
+.ansi31 { color: #aa0000; }
+.ansi32 { color: #00aa00; }
+.ansi33 { color: #aa5500; }
+.ansi34 { color: #0000aa; }
+.ansi35 { color: #E850A8; }
+.ansi36 { color: #00aaaa; }
+</style>
+</head>
+<body class="body_foreground body_background" style="font-size: normal;" >
+<pre class="ansi2html-content">
+
+<span class="ansi1 ansi32">Energista</span>
+
+
+<span class="ansi3">This script estimates consumption of individual devices based on </span>
+<span class="ansi3">their state from Home Assistant and total power measurement </span>
+<span class="ansi3">from Shelly Pro 3EM.</span>
+
+
+<span class="ansi34">Loading config from devices.yml</span>
+<span class="ansi1 ansi35">Config</span><span class="ansi1">(</span>
+    <span class="ansi33">devices</span>=<span class="ansi1">[</span>
+        <span class="ansi1 ansi35">Device</span><span class="ansi1">(</span><span class="ansi33">entity_id</span>=<span class="ansi32">'switch.svetlo_kuchyne_l1'</span>, <span class="ansi33">group</span>=<span class="ansi32">'Phase A'</span>, <span class="ansi33">consumption_on</span>=<span class="ansi32">'10 ± 3'</span>, <span class="ansi33">consumption_off</span>=<span class="ansi32">'0 ± 0.01'</span><span class="ansi1">)</span>,
+        <span class="ansi1 ansi35">Device</span><span class="ansi1">(</span><span class="ansi33">entity_id</span>=<span class="ansi32">'switch.svetlo_kuchyne_l2'</span>, <span class="ansi33">group</span>=<span class="ansi32">'Phase A'</span>, <span class="ansi33">consumption_on</span>=<span class="ansi32">'10 ± 3'</span>, <span class="ansi33">consumption_off</span>=<span class="ansi32">'0 ± 0.01'</span><span class="ansi1">)</span>,
+        <span class="ansi1 ansi35">Device</span><span class="ansi1">(</span><span class="ansi33">entity_id</span>=<span class="ansi32">'switch.vypinac_ema_right'</span>, <span class="ansi33">group</span>=<span class="ansi32">'Phase A'</span>, <span class="ansi33">consumption_on</span>=<span class="ansi32">'10 ± 3'</span>, <span class="ansi33">consumption_off</span>=<span class="ansi32">'0 ± 0.01'</span><span class="ansi1">)</span>,
+        <span class="ansi1 ansi35">Device</span><span class="ansi1">(</span><span class="ansi33">entity_id</span>=<span class="ansi32">'climate.loznice'</span>, <span class="ansi33">group</span>=<span class="ansi32">'Phase B'</span>, <span class="ansi33">consumption_on</span>=<span class="ansi32">'500 ± 100'</span>, <span class="ansi33">consumption_off</span>=<span class="ansi32">'10 ± 1'</span><span class="ansi1">)</span>,
+        <span class="ansi1 ansi35">Device</span><span class="ansi1">(</span><span class="ansi33">entity_id</span>=<span class="ansi32">'climate.obyvak'</span>, <span class="ansi33">group</span>=<span class="ansi32">'Phase B'</span>, <span class="ansi33">consumption_on</span>=<span class="ansi32">'500 ± 100'</span>, <span class="ansi33">consumption_off</span>=<span class="ansi32">'10 ± 1'</span><span class="ansi1">)</span>,
+        <span class="ansi1 ansi35">Device</span><span class="ansi1">(</span><span class="ansi33">entity_id</span>=<span class="ansi32">'climate.pokojicek'</span>, <span class="ansi33">group</span>=<span class="ansi32">'Phase B'</span>, <span class="ansi33">consumption_on</span>=<span class="ansi32">'500 ± 100'</span>, <span class="ansi33">consumption_off</span>=<span class="ansi32">'10 ± 1'</span><span class="ansi1">)</span>
+    <span class="ansi1">]</span>,
+    <span class="ansi33">measurement</span>=<span class="ansi1 ansi35">Measurement</span><span class="ansi1">(</span><span class="ansi33">mqtt_host</span>=<span class="ansi32">'192.168.1.4'</span>, <span class="ansi33">mqtt_username</span>=<span class="ansi32">'Tom'</span>, <span class="ansi33">mqtt_password</span>=<span class="ansi32">'magicmqttpassword'</span>, <span class="ansi33">mqtt_topic</span>=<span class="ansi32">'shellypro3em-mqtt/status/em:0'</span><span class="ansi1">)</span>,
+    <span class="ansi33">groups</span>=<span class="ansi1">[</span><span class="ansi1 ansi35">Group</span><span class="ansi1">(</span><span class="ansi33">name</span>=<span class="ansi32">'Phase A'</span>, <span class="ansi33">measurement_field</span>=<span class="ansi32">'a_act_power'</span><span class="ansi1">)</span>, <span class="ansi1 ansi35">Group</span><span class="ansi1">(</span><span class="ansi33">name</span>=<span class="ansi32">'Phase B'</span>, <span class="ansi33">measurement_field</span>=<span class="ansi32">'b_act_power'</span><span class="ansi1">)</span>, <span class="ansi1 ansi35">Group</span><span class="ansi1">(</span><span class="ansi33">name</span>=<span class="ansi32">'Phase C'</span>, <span class="ansi33">measurement_field</span>=<span class="ansi32">'c_act_power'</span><span class="ansi1">)</span><span class="ansi1">]</span>,
+    <span class="ansi33">home_assistant</span>=<span class="ansi1 ansi35">HomeAssistant</span><span class="ansi1">(</span>
+        <span class="ansi33">api_url</span>=<span class="ansi32">'homeassistant.local:8123'</span>,
+        <span class="ansi33">api_token</span>=<span class="ansi32">'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'</span>
+    <span class="ansi1">)</span>,
+    <span class="ansi33">ekf</span>=<span class="ansi1 ansi35">Ekf</span><span class="ansi1">(</span><span class="ansi33">max_residual</span>=<span class="ansi1 ansi36">100</span><span class="ansi1 ansi36">.0</span><span class="ansi1">)</span>
+<span class="ansi1">)</span>
+{'type': 'auth_required', 'ha_version': '2024.12.5'}
+{'type': 'auth_ok', 'ha_version': '2024.12.5'}
+OrderedDict([('climate.loznice', 'off'), ('climate.pokojicek', 'off'), ('climate.obyvak', 'off'), ('switch.svetlo_kuchyne_l1', 'on'), ('switch.svetlo_kuchyne_l2', 'on'), ('switch.vypinac_ema_right', 'off')])
+{'id': 2, 'type': 'result', 'success': True, 'result': None}
+{
+    'id': 0,
+    'a_current': 5.427,
+    'a_voltage': 235.8,
+    'a_act_power': 1275.1,
+    'a_aprt_power': 1280.8,
+    'a_pf': 1.0,
+    'a_freq': 50.0,
+    'b_current': 0.517,
+    'b_voltage': 232.4,
+    'b_act_power': 12.5,
+    'b_aprt_power': 120.4,
+    'b_pf': 0.11,
+    'b_freq': 50.0,
+    'c_current': 0.873,
+    'c_voltage': 236.4,
+    'c_act_power': 146.9,
+    'c_aprt_power': 206.5,
+    'c_pf': 0.72,
+    'c_freq': 50.0,
+    'n_current': None,
+    'total_current': 6.818,
+    'total_act_power': 1434.53,
+    'total_aprt_power': 1607.635,
+    'user_calibrated_phase': []
+}
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+<span class="ansi1 ansi32">**********************</span>
+<span class="ansi1 ansi32">****** EKF step ******</span>
+<span class="ansi1 ansi32">**********************</span>
+
+<span class="ansi1">[</span><span class="ansi1">[</span><span class="ansi1 ansi36">1275.1</span>          <span class="ansi1 ansi36">12.5</span>         <span class="ansi1 ansi36">146.9</span>       <span class="ansi1">]</span>
+ <span class="ansi1">[</span> <span class="ansi1 ansi36">211.49150875</span>   <span class="ansi1 ansi36">29.6322924</span>     <span class="ansi1 ansi36">0</span>.        <span class="ansi1">]</span><span class="ansi1">]</span>
+<span class="ansi1 ansi32">EKF state</span>
+Devices:
+ - switch.svetlo_kuchyne_l1:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.0351390527299</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.svetlo_kuchyne_l2:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.03513905272985</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.vypinac_ema_right:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">10.0</span>
+     consumption off: <span class="ansi1 ansi36">34.71997804922054</span>
+ - climate.loznice:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796157839448467</span>
+ - climate.obyvak:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796157839448467</span>
+ - climate.pokojicek:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796157839448465</span>
+Group residuals:
+ - Phase A:
+     residual: <span class="ansi1 ansi31">1035.6790848052756</span>
+ - Phase B:
+     residual: <span class="ansi1 ansi32">16.74889935703676</span>
+ - Phase C:
+     residual: <span class="ansi1 ansi31">145.68595041322314</span>
+
+<span class="ansi1 ansi32">Measurements</span>
+ - Phase A:
+     measurement: <span class="ansi1 ansi36">1275.1</span>
+     prediction: <span class="ansi1 ansi36">211.49150875094247</span>
+     innovation: <span class="ansi1 ansi36">1063.6084912490574</span>
+ - Phase B:
+     measurement: <span class="ansi1 ansi36">12.5</span>
+     prediction: <span class="ansi1 ansi36">29.63229239500281</span>
+     innovation: <span class="ansi1 ansi36">-17.13229239500281</span>
+ - Phase C:
+     measurement: <span class="ansi1 ansi36">146.9</span>
+     prediction: <span class="ansi1 ansi36">0.0</span>
+     innovation: <span class="ansi1 ansi36">146.9</span>
+
+<span class="ansi1 ansi31">Warnings:</span>
+ - High residual in group Phase A
+ - High residual in group Phase C
+
+Duration: 2.7765493392944336
+{
+    'id': 0,
+    'a_current': 5.416,
+    'a_voltage': 236.6,
+    'a_act_power': 1278.1,
+    'a_aprt_power': 1282.4,
+    'a_pf': 1.0,
+    'a_freq': 50.0,
+    'b_current': 0.516,
+    'b_voltage': 232.2,
+    'b_act_power': 12.1,
+    'b_aprt_power': 120.1,
+    'b_pf': 0.1,
+    'b_freq': 50.0,
+    'c_current': 0.846,
+    'c_voltage': 236.1,
+    'c_act_power': 147.1,
+    'c_aprt_power': 199.8,
+    'c_pf': 0.71,
+    'c_freq': 50.0,
+    'n_current': None,
+    'total_current': 6.778,
+    'total_act_power': 1437.323,
+    'total_aprt_power': 1602.184,
+    'user_calibrated_phase': []
+}
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+<span class="ansi1 ansi32">**********************</span>
+<span class="ansi1 ansi32">****** EKF step ******</span>
+<span class="ansi1 ansi32">**********************</span>
+
+<span class="ansi1">[</span><span class="ansi1">[</span><span class="ansi1 ansi36">1278.1</span>          <span class="ansi1 ansi36">12.1</span>         <span class="ansi1 ansi36">147.1</span>       <span class="ansi1">]</span>
+ <span class="ansi1">[</span><span class="ansi1 ansi36">1266.46934096</span>   <span class="ansi1 ansi36">12.63957416</span>  <span class="ansi1 ansi36">145.68595041</span><span class="ansi1">]</span><span class="ansi1">]</span>
+<span class="ansi1 ansi32">EKF state</span>
+Devices:
+ - switch.svetlo_kuchyne_l1:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.03690788280029</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.svetlo_kuchyne_l2:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.03690788280024</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.vypinac_ema_right:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">10.0</span>
+     consumption off: <span class="ansi1 ansi36">34.720969859282555</span>
+ - climate.loznice:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796099147011041</span>
+ - climate.obyvak:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796099147011041</span>
+ - climate.pokojicek:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.79609914701104</span>
+Group residuals:
+ - Phase A:
+     residual: <span class="ansi1 ansi31">1047.1176167022666</span>
+ - Phase B:
+     residual: <span class="ansi1 ansi32">17.279594330620974</span>
+ - Phase C:
+     residual: <span class="ansi1 ansi31">147.07718970803893</span>
+
+<span class="ansi1 ansi32">Measurements</span>
+ - Phase A:
+     measurement: <span class="ansi1 ansi36">1278.1</span>
+     prediction: <span class="ansi1 ansi36">1266.4693409599558</span>
+     innovation: <span class="ansi1 ansi36">11.630659040044065</span>
+ - Phase B:
+     measurement: <span class="ansi1 ansi36">12.1</span>
+     prediction: <span class="ansi1 ansi36">12.63957416130864</span>
+     innovation: <span class="ansi1 ansi36">-0.5395741613086411</span>
+ - Phase C:
+     measurement: <span class="ansi1 ansi36">147.1</span>
+     prediction: <span class="ansi1 ansi36">145.68595041322314</span>
+     innovation: <span class="ansi1 ansi36">1.414049586776855</span>
+
+<span class="ansi1 ansi31">Warnings:</span>
+ - High residual in group Phase A
+ - High residual in group Phase C
+
+Duration: 7.852153301239014
+{
+    'id': 0,
+    'a_current': 5.405,
+    'a_voltage': 236.2,
+    'a_act_power': 1274.7,
+    'a_aprt_power': 1278.0,
+    'a_pf': 1.0,
+    'a_freq': 50.0,
+    'b_current': 0.517,
+    'b_voltage': 231.4,
+    'b_act_power': 13.4,
+    'b_aprt_power': 119.7,
+    'b_pf': 0.1,
+    'b_freq': 50.0,
+    'c_current': 0.865,
+    'c_voltage': 236.5,
+    'c_act_power': 147.5,
+    'c_aprt_power': 204.6,
+    'c_pf': 0.72,
+    'c_freq': 50.0,
+    'n_current': None,
+    'total_current': 6.787,
+    'total_act_power': 1435.573,
+    'total_aprt_power': 1602.285,
+    'user_calibrated_phase': []
+}
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+<span class="ansi1 ansi32">**********************</span>
+<span class="ansi1 ansi32">****** EKF step ******</span>
+<span class="ansi1 ansi32">**********************</span>
+
+<span class="ansi1">[</span><span class="ansi1">[</span><span class="ansi1 ansi36">1274.7</span>          <span class="ansi1 ansi36">13.4</span>         <span class="ansi1 ansi36">147.5</span>       <span class="ansi1">]</span>
+ <span class="ansi1">[</span><span class="ansi1 ansi36">1277.91240233</span>   <span class="ansi1 ansi36">12.10870311</span>  <span class="ansi1 ansi36">147.07718971</span><span class="ansi1">]</span><span class="ansi1">]</span>
+<span class="ansi1 ansi32">EKF state</span>
+Devices:
+ - switch.svetlo_kuchyne_l1:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.0367963588102</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.svetlo_kuchyne_l2:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.03679635881014</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.vypinac_ema_right:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">10.0</span>
+     consumption off: <span class="ansi1 ansi36">34.720861797372315</span>
+ - climate.loznice:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796143074433342</span>
+ - climate.obyvak:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796143074433342</span>
+ - climate.pokojicek:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.79614307443334</span>
+Group residuals:
+ - Phase A:
+     residual: <span class="ansi1 ansi31">1043.957366892368</span>
+ - Phase B:
+     residual: <span class="ansi1 ansi32">16.00925999582888</span>
+ - Phase C:
+     residual: <span class="ansi1 ansi31">147.49317870439475</span>
+
+<span class="ansi1 ansi32">Measurements</span>
+ - Phase A:
+     measurement: <span class="ansi1 ansi36">1274.7</span>
+     prediction: <span class="ansi1 ansi36">1277.9124023271497</span>
+     innovation: <span class="ansi1 ansi36">-3.2124023271496753</span>
+ - Phase B:
+     measurement: <span class="ansi1 ansi36">13.4</span>
+     prediction: <span class="ansi1 ansi36">12.10870311041215</span>
+     innovation: <span class="ansi1 ansi36">1.2912968895878496</span>
+ - Phase C:
+     measurement: <span class="ansi1 ansi36">147.5</span>
+     prediction: <span class="ansi1 ansi36">147.07718970803893</span>
+     innovation: <span class="ansi1 ansi36">0.42281029196107056</span>
+
+<span class="ansi1 ansi31">Warnings:</span>
+ - High residual in group Phase A
+ - High residual in group Phase C
+
+Duration: 12.764655113220215
+{
+    'id': 0,
+    'a_current': 1.09,
+    'a_voltage': 238.1,
+    'a_act_power': 243.5,
+    'a_aprt_power': 259.6,
+    'a_pf': 0.94,
+    'a_freq': 50.0,
+    'b_current': 0.588,
+    'b_voltage': 230.9,
+    'b_act_power': 34.3,
+    'b_aprt_power': 135.9,
+    'b_pf': 0.25,
+    'b_freq': 50.0,
+    'c_current': 0.841,
+    'c_voltage': 237.1,
+    'c_act_power': 148.0,
+    'c_aprt_power': 199.5,
+    'c_pf': 0.73,
+    'c_freq': 50.0,
+    'n_current': None,
+    'total_current': 2.519,
+    'total_act_power': 425.797,
+    'total_aprt_power': 595.015,
+    'user_calibrated_phase': []
+}
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+<span class="ansi1 ansi32">**********************</span>
+<span class="ansi1 ansi32">****** EKF step ******</span>
+<span class="ansi1 ansi32">**********************</span>
+
+<span class="ansi1">[</span><span class="ansi1">[</span> <span class="ansi1 ansi36">243.5</span>          <span class="ansi1 ansi36">34.3</span>         <span class="ansi1 ansi36">148</span>.        <span class="ansi1">]</span>
+ <span class="ansi1">[</span><span class="ansi1 ansi36">1274.75182141</span>   <span class="ansi1 ansi36">13.37916923</span>  <span class="ansi1 ansi36">147.4931787</span> <span class="ansi1">]</span><span class="ansi1">]</span>
+<span class="ansi1 ansi32">EKF state</span>
+Devices:
+ - switch.svetlo_kuchyne_l1:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.0029471935567</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.svetlo_kuchyne_l2:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.00294719355664</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.vypinac_ema_right:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">10.0</span>
+     consumption off: <span class="ansi1 ansi36">34.687030560916405</span>
+ - climate.loznice:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796829530928308</span>
+ - climate.obyvak:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796829530928308</span>
+ - climate.pokojicek:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796829530928306</span>
+Group residuals:
+ - Phase A:
+     residual: <span class="ansi1 ansi32">29.44288747024939</span>
+ - Phase B:
+     residual: <span class="ansi1 ansi32">4.572023502571774</span>
+ - Phase C:
+     residual: <span class="ansi1 ansi31">147.99182333529652</span>
+
+<span class="ansi1 ansi32">Measurements</span>
+ - Phase A:
+     measurement: <span class="ansi1 ansi36">243.5</span>
+     prediction: <span class="ansi1 ansi36">1274.7518214073607</span>
+     innovation: <span class="ansi1 ansi36">-1031.2518214073607</span>
+ - Phase B:
+     measurement: <span class="ansi1 ansi36">34.3</span>
+     prediction: <span class="ansi1 ansi36">13.379169227471142</span>
+     innovation: <span class="ansi1 ansi36">20.920830772528856</span>
+ - Phase C:
+     measurement: <span class="ansi1 ansi36">148.0</span>
+     prediction: <span class="ansi1 ansi36">147.49317870439475</span>
+     innovation: <span class="ansi1 ansi36">0.5068212956052491</span>
+
+<span class="ansi1 ansi31">Warnings:</span>
+ - High residual in group Phase C
+
+Duration: 18.763731956481934
+{
+    'id': 0,
+    'a_current': 1.135,
+    'a_voltage': 237.9,
+    'a_act_power': 255.5,
+    'a_aprt_power': 270.3,
+    'a_pf': 0.94,
+    'a_freq': 50.0,
+    'b_current': 0.59,
+    'b_voltage': 231.2,
+    'b_act_power': 34.7,
+    'b_aprt_power': 136.5,
+    'b_pf': 0.26,
+    'b_freq': 50.0,
+    'c_current': 0.871,
+    'c_voltage': 236.8,
+    'c_act_power': 148.0,
+    'c_aprt_power': 206.3,
+    'c_pf': 0.74,
+    'c_freq': 50.0,
+    'n_current': None,
+    'total_current': 2.596,
+    'total_act_power': 438.195,
+    'total_aprt_power': 613.066,
+    'user_calibrated_phase': []
+}
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+<span class="ansi1 ansi32">**********************</span>
+<span class="ansi1 ansi32">****** EKF step ******</span>
+<span class="ansi1 ansi32">**********************</span>
+
+<span class="ansi1">[</span><span class="ansi1">[</span><span class="ansi1 ansi36">255.5</span>         <span class="ansi1 ansi36">34.7</span>        <span class="ansi1 ansi36">148</span>.        <span class="ansi1">]</span>
+ <span class="ansi1">[</span><span class="ansi1 ansi36">260.13581242</span>  <span class="ansi1 ansi36">33.9625121</span>  <span class="ansi1 ansi36">147.99182334</span><span class="ansi1">]</span><span class="ansi1">]</span>
+<span class="ansi1 ansi32">EKF state</span>
+Devices:
+ - switch.svetlo_kuchyne_l1:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.0027951721361</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.svetlo_kuchyne_l2:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.00279517213605</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.vypinac_ema_right:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">10.0</span>
+     consumption off: <span class="ansi1 ansi36">34.68687854079596</span>
+ - climate.loznice:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796853715111629</span>
+ - climate.obyvak:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796853715111629</span>
+ - climate.pokojicek:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796853715111627</span>
+Group residuals:
+ - Phase A:
+     residual: <span class="ansi1 ansi32">24.882314503621835</span>
+ - Phase B:
+     residual: <span class="ansi1 ansi32">5.2975419443394065</span>
+ - Phase C:
+     residual: <span class="ansi1 ansi31">147.99986808398492</span>
+
+<span class="ansi1 ansi32">Measurements</span>
+ - Phase A:
+     measurement: <span class="ansi1 ansi36">255.5</span>
+     prediction: <span class="ansi1 ansi36">260.1358124182791</span>
+     innovation: <span class="ansi1 ansi36">-4.635812418279102</span>
+ - Phase B:
+     measurement: <span class="ansi1 ansi36">34.7</span>
+     prediction: <span class="ansi1 ansi36">33.9625120953567</span>
+     innovation: <span class="ansi1 ansi36">0.7374879046433023</span>
+ - Phase C:
+     measurement: <span class="ansi1 ansi36">148.0</span>
+     prediction: <span class="ansi1 ansi36">147.99182333529652</span>
+     innovation: <span class="ansi1 ansi36">0.008176664703483993</span>
+
+<span class="ansi1 ansi31">Warnings:</span>
+ - High residual in group Phase C
+
+Duration: 23.772732973098755
+{
+    'id': 0,
+    'a_current': 1.135,
+    'a_voltage': 238.3,
+    'a_act_power': 254.7,
+    'a_aprt_power': 270.6,
+    'a_pf': 0.94,
+    'a_freq': 50.0,
+    'b_current': 0.591,
+    'b_voltage': 231.7,
+    'b_act_power': 34.4,
+    'b_aprt_power': 137.0,
+    'b_pf': 0.25,
+    'b_freq': 50.0,
+    'c_current': 0.874,
+    'c_voltage': 236.8,
+    'c_act_power': 148.5,
+    'c_aprt_power': 206.8,
+    'c_pf': 0.73,
+    'c_freq': 50.0,
+    'n_current': None,
+    'total_current': 2.599,
+    'total_act_power': 437.64,
+    'total_aprt_power': 614.445,
+    'user_calibrated_phase': []
+}
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+<span class="ansi1 ansi32">**********************</span>
+<span class="ansi1 ansi32">****** EKF step ******</span>
+<span class="ansi1 ansi32">**********************</span>
+
+<span class="ansi1">[</span><span class="ansi1">[</span><span class="ansi1 ansi36">254.7</span>         <span class="ansi1 ansi36">34.4</span>        <span class="ansi1 ansi36">148.5</span>       <span class="ansi1">]</span>
+ <span class="ansi1">[</span><span class="ansi1 ansi36">255.57478339</span>  <span class="ansi1 ansi36">34.68810309</span> <span class="ansi1 ansi36">147.99986808</span><span class="ansi1">]</span><span class="ansi1">]</span>
+<span class="ansi1 ansi32">EKF state</span>
+Devices:
+ - switch.svetlo_kuchyne_l1:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.00276648594189</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.svetlo_kuchyne_l2:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.00276648594183</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.vypinac_ema_right:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">10.0</span>
+     consumption off: <span class="ansi1 ansi36">34.6868498546057</span>
+ - climate.loznice:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796844267538031</span>
+ - climate.obyvak:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796844267538031</span>
+ - climate.pokojicek:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.79684426753803</span>
+Group residuals:
+ - Phase A:
+     residual: <span class="ansi1 ansi32">24.02172888905755</span>
+ - Phase B:
+     residual: <span class="ansi1 ansi32">5.01411478089315</span>
+ - Phase C:
+     residual: <span class="ansi1 ansi31">148.4919312565982</span>
+
+<span class="ansi1 ansi32">Measurements</span>
+ - Phase A:
+     measurement: <span class="ansi1 ansi36">254.7</span>
+     prediction: <span class="ansi1 ansi36">255.57478338868995</span>
+     innovation: <span class="ansi1 ansi36">-0.8747833886899627</span>
+ - Phase B:
+     measurement: <span class="ansi1 ansi36">34.4</span>
+     prediction: <span class="ansi1 ansi36">34.68810308967429</span>
+     innovation: <span class="ansi1 ansi36">-0.2881030896742942</span>
+ - Phase C:
+     measurement: <span class="ansi1 ansi36">148.5</span>
+     prediction: <span class="ansi1 ansi36">147.99986808398492</span>
+     innovation: <span class="ansi1 ansi36">0.5001319160150786</span>
+
+<span class="ansi1 ansi31">Warnings:</span>
+ - High residual in group Phase C
+
+Duration: 28.762700080871582
+{
+    'id': 0,
+    'a_current': 5.558,
+    'a_voltage': 236.6,
+    'a_act_power': 1314.2,
+    'a_aprt_power': 1316.4,
+    'a_pf': 1.0,
+    'a_freq': 50.0,
+    'b_current': 0.588,
+    'b_voltage': 231.9,
+    'b_act_power': 35.4,
+    'b_aprt_power': 136.5,
+    'b_pf': 0.26,
+    'b_freq': 50.0,
+    'c_current': 0.841,
+    'c_voltage': 237.2,
+    'c_act_power': 147.0,
+    'c_aprt_power': 199.3,
+    'c_pf': 0.74,
+    'c_freq': 50.0,
+    'n_current': None,
+    'total_current': 6.986,
+    'total_act_power': 1496.606,
+    'total_aprt_power': 1652.248,
+    'user_calibrated_phase': []
+}
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+<span class="ansi1 ansi32">**********************</span>
+<span class="ansi1 ansi32">****** EKF step ******</span>
+<span class="ansi1 ansi32">**********************</span>
+
+<span class="ansi1">[</span><span class="ansi1">[</span><span class="ansi1 ansi36">1314.2</span>          <span class="ansi1 ansi36">35.4</span>         <span class="ansi1 ansi36">147</span>.        <span class="ansi1">]</span>
+ <span class="ansi1">[</span> <span class="ansi1 ansi36">254.71411172</span>   <span class="ansi1 ansi36">34.40464758</span>  <span class="ansi1 ansi36">148.49193126</span><span class="ansi1">]</span><span class="ansi1">]</span>
+<span class="ansi1 ansi32">EKF state</span>
+Devices:
+ - switch.svetlo_kuchyne_l1:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.0375094988874</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.svetlo_kuchyne_l2:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.03750949888735</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.vypinac_ema_right:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">10.0</span>
+     consumption off: <span class="ansi1 ansi36">34.72159286747388</span>
+ - climate.loznice:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796876907464833</span>
+ - climate.obyvak:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796876907464833</span>
+ - climate.pokojicek:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796876907464831</span>
+Group residuals:
+ - Phase A:
+     residual: <span class="ansi1 ansi31">1066.3121131119208</span>
+ - Phase B:
+     residual: <span class="ansi1 ansi32">5.993312582482867</span>
+ - Phase C:
+     residual: <span class="ansi1 ansi31">147.02406967061515</span>
+
+<span class="ansi1 ansi32">Measurements</span>
+ - Phase A:
+     measurement: <span class="ansi1 ansi36">1314.2</span>
+     prediction: <span class="ansi1 ansi36">254.71411171554698</span>
+     innovation: <span class="ansi1 ansi36">1059.485888284453</span>
+ - Phase B:
+     measurement: <span class="ansi1 ansi36">35.4</span>
+     prediction: <span class="ansi1 ansi36">34.40464758350724</span>
+     innovation: <span class="ansi1 ansi36">0.9953524164927572</span>
+ - Phase C:
+     measurement: <span class="ansi1 ansi36">147.0</span>
+     prediction: <span class="ansi1 ansi36">148.4919312565982</span>
+     innovation: <span class="ansi1 ansi36">-1.4919312565982068</span>
+
+<span class="ansi1 ansi31">Warnings:</span>
+ - High residual in group Phase A
+ - High residual in group Phase C
+
+Duration: 33.76835513114929
+{
+    'id': 0,
+    'a_current': 1.148,
+    'a_voltage': 238.4,
+    'a_act_power': 254.6,
+    'a_aprt_power': 274.0,
+    'a_pf': 0.85,
+    'a_freq': 50.1,
+    'b_current': 0.594,
+    'b_voltage': 231.0,
+    'b_act_power': 35.5,
+    'b_aprt_power': 137.3,
+    'b_pf': 0.25,
+    'b_freq': 50.1,
+    'c_current': 0.864,
+    'c_voltage': 235.5,
+    'c_act_power': 147.5,
+    'c_aprt_power': 203.6,
+    'c_pf': 0.71,
+    'c_freq': 50.1,
+    'n_current': None,
+    'total_current': 2.607,
+    'total_act_power': 437.589,
+    'total_aprt_power': 614.95,
+    'user_calibrated_phase': []
+}
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+<span class="ansi1 ansi32">**********************</span>
+<span class="ansi1 ansi32">****** EKF step ******</span>
+<span class="ansi1 ansi32">**********************</span>
+
+<span class="ansi1">[</span><span class="ansi1">[</span> <span class="ansi1 ansi36">254.6</span>          <span class="ansi1 ansi36">35.5</span>         <span class="ansi1 ansi36">147.5</span>       <span class="ansi1">]</span>
+ <span class="ansi1">[</span><span class="ansi1 ansi36">1297.10872498</span>   <span class="ansi1 ansi36">35.3839433</span>   <span class="ansi1 ansi36">147.02406967</span><span class="ansi1">]</span><span class="ansi1">]</span>
+<span class="ansi1 ansi32">EKF state</span>
+Devices:
+ - switch.svetlo_kuchyne_l1:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.00332320685031</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.svetlo_kuchyne_l2:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.00332320685025</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.vypinac_ema_right:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">10.0</span>
+     consumption off: <span class="ansi1 ansi36">34.68740657543801</span>
+ - climate.loznice:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.79688071323449</span>
+ - climate.obyvak:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.79688071323449</span>
+ - climate.pokojicek:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796880713234488</span>
+Group residuals:
+ - Phase A:
+     residual: <span class="ansi1 ansi32">40.72335206486946</span>
+ - Phase B:
+     residual: <span class="ansi1 ansi32">6.107485672175375</span>
+ - Phase C:
+     residual: <span class="ansi1 ansi31">147.49232170636992</span>
+
+<span class="ansi1 ansi32">Measurements</span>
+ - Phase A:
+     measurement: <span class="ansi1 ansi36">254.6</span>
+     prediction: <span class="ansi1 ansi36">1297.1087249771695</span>
+     innovation: <span class="ansi1 ansi36">-1042.5087249771695</span>
+ - Phase B:
+     measurement: <span class="ansi1 ansi36">35.5</span>
+     prediction: <span class="ansi1 ansi36">35.38394330487736</span>
+     innovation: <span class="ansi1 ansi36">0.11605669512263717</span>
+ - Phase C:
+     measurement: <span class="ansi1 ansi36">147.5</span>
+     prediction: <span class="ansi1 ansi36">147.02406967061515</span>
+     innovation: <span class="ansi1 ansi36">0.4759303293848518</span>
+
+<span class="ansi1 ansi31">Warnings:</span>
+ - High residual in group Phase C
+
+Duration: 48.77222990989685
+{
+    'id': 0,
+    'a_current': 1.111,
+    'a_voltage': 238.9,
+    'a_act_power': 251.7,
+    'a_aprt_power': 265.7,
+    'a_pf': 0.94,
+    'a_freq': 50.0,
+    'b_current': 0.587,
+    'b_voltage': 231.4,
+    'b_act_power': 34.6,
+    'b_aprt_power': 136.1,
+    'b_pf': 0.25,
+    'b_freq': 50.0,
+    'c_current': 0.87,
+    'c_voltage': 235.9,
+    'c_act_power': 147.8,
+    'c_aprt_power': 205.3,
+    'c_pf': 0.72,
+    'c_freq': 50.0,
+    'n_current': None,
+    'total_current': 2.568,
+    'total_act_power': 434.023,
+    'total_aprt_power': 606.976,
+    'user_calibrated_phase': []
+}
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+<span class="ansi1 ansi32">**********************</span>
+<span class="ansi1 ansi32">****** EKF step ******</span>
+<span class="ansi1 ansi32">**********************</span>
+
+<span class="ansi1">[</span><span class="ansi1">[</span><span class="ansi1 ansi36">251.7</span>         <span class="ansi1 ansi36">34.6</span>        <span class="ansi1 ansi36">147.8</span>       <span class="ansi1">]</span>
+ <span class="ansi1">[</span><span class="ansi1 ansi36">271.41740505</span>  <span class="ansi1 ansi36">35.49812781</span> <span class="ansi1 ansi36">147.49232171</span><span class="ansi1">]</span><span class="ansi1">]</span>
+<span class="ansi1 ansi32">EKF state</span>
+Devices:
+ - switch.svetlo_kuchyne_l1:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.00267662716115</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.svetlo_kuchyne_l2:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.0026766271611</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.vypinac_ema_right:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">10.0</span>
+     consumption off: <span class="ansi1 ansi36">34.686759995748844</span>
+ - climate.loznice:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796851261529266</span>
+ - climate.obyvak:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796851261529266</span>
+ - climate.pokojicek:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796851261529264</span>
+Group residuals:
+ - Phase A:
+     residual: <span class="ansi1 ansi32">21.325961389941586</span>
+ - Phase B:
+     residual: <span class="ansi1 ansi32">5.223934515453019</span>
+ - Phase C:
+     residual: <span class="ansi1 ansi31">147.79503615521804</span>
+
+<span class="ansi1 ansi32">Measurements</span>
+ - Phase A:
+     measurement: <span class="ansi1 ansi36">251.7</span>
+     prediction: <span class="ansi1 ansi36">271.41740505400804</span>
+     innovation: <span class="ansi1 ansi36">-19.717405054008054</span>
+ - Phase B:
+     measurement: <span class="ansi1 ansi36">34.6</span>
+     prediction: <span class="ansi1 ansi36">35.498127811878845</span>
+     innovation: <span class="ansi1 ansi36">-0.8981278118788438</span>
+ - Phase C:
+     measurement: <span class="ansi1 ansi36">147.8</span>
+     prediction: <span class="ansi1 ansi36">147.49232170636992</span>
+     innovation: <span class="ansi1 ansi36">0.30767829363009014</span>
+
+<span class="ansi1 ansi31">Warnings:</span>
+ - High residual in group Phase C
+
+Duration: 52.8289270401001
+{
+    'id': 0,
+    'a_current': 5.493,
+    'a_voltage': 234.9,
+    'a_act_power': 1290.5,
+    'a_aprt_power': 1291.5,
+    'a_pf': 1.0,
+    'a_freq': 50.0,
+    'b_current': 0.591,
+    'b_voltage': 232.9,
+    'b_act_power': 35.7,
+    'b_aprt_power': 137.8,
+    'b_pf': 0.26,
+    'b_freq': 50.0,
+    'c_current': 0.876,
+    'c_voltage': 235.8,
+    'c_act_power': 146.9,
+    'c_aprt_power': 206.5,
+    'c_pf': 0.71,
+    'c_freq': 50.0,
+    'n_current': None,
+    'total_current': 6.96,
+    'total_act_power': 1473.172,
+    'total_aprt_power': 1635.83,
+    'user_calibrated_phase': []
+}
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+<span class="ansi1 ansi32">**********************</span>
+<span class="ansi1 ansi32">****** EKF step ******</span>
+<span class="ansi1 ansi32">**********************</span>
+
+<span class="ansi1">[</span><span class="ansi1">[</span><span class="ansi1 ansi36">1290.5</span>          <span class="ansi1 ansi36">35.7</span>         <span class="ansi1 ansi36">146.9</span>       <span class="ansi1">]</span>
+ <span class="ansi1">[</span> <span class="ansi1 ansi36">252.01807464</span>   <span class="ansi1 ansi36">34.6144883</span>   <span class="ansi1 ansi36">147.79503616</span><span class="ansi1">]</span><span class="ansi1">]</span>
+<span class="ansi1 ansi32">EKF state</span>
+Devices:
+ - switch.svetlo_kuchyne_l1:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.03673087104683</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.svetlo_kuchyne_l2:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.03673087104677</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.vypinac_ema_right:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">10.0</span>
+     consumption off: <span class="ansi1 ansi36">34.72081423963453</span>
+ - climate.loznice:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796886857989126</span>
+ - climate.obyvak:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796886857989126</span>
+ - climate.pokojicek:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796886857989124</span>
+Group residuals:
+ - Phase A:
+     residual: <span class="ansi1 ansi31">1042.9532779603956</span>
+ - Phase B:
+     residual: <span class="ansi1 ansi32">6.291828311246058</span>
+ - Phase C:
+     residual: <span class="ansi1 ansi31">146.91443982445537</span>
+
+<span class="ansi1 ansi32">Measurements</span>
+ - Phase A:
+     measurement: <span class="ansi1 ansi36">1290.5</span>
+     prediction: <span class="ansi1 ansi36">252.01807464001268</span>
+     innovation: <span class="ansi1 ansi36">1038.4819253599874</span>
+ - Phase B:
+     measurement: <span class="ansi1 ansi36">35.7</span>
+     prediction: <span class="ansi1 ansi36">34.61448830004081</span>
+     innovation: <span class="ansi1 ansi36">1.0855116999591914</span>
+ - Phase C:
+     measurement: <span class="ansi1 ansi36">146.9</span>
+     prediction: <span class="ansi1 ansi36">147.79503615521804</span>
+     innovation: <span class="ansi1 ansi36">-0.8950361552180368</span>
+
+<span class="ansi1 ansi31">Warnings:</span>
+ - High residual in group Phase A
+ - High residual in group Phase C
+
+Duration: 66.8372528553009
+{
+    'id': 0,
+    'a_current': 5.477,
+    'a_voltage': 234.7,
+    'a_act_power': 1283.9,
+    'a_aprt_power': 1286.5,
+    'a_pf': 1.0,
+    'a_freq': 50.0,
+    'b_current': 0.52,
+    'b_voltage': 233.4,
+    'b_act_power': 12.4,
+    'b_aprt_power': 121.5,
+    'b_pf': 0.11,
+    'b_freq': 50.0,
+    'c_current': 0.891,
+    'c_voltage': 235.3,
+    'c_act_power': 146.8,
+    'c_aprt_power': 209.8,
+    'c_pf': 0.69,
+    'c_freq': 50.0,
+    'n_current': None,
+    'total_current': 6.888,
+    'total_act_power': 1443.11,
+    'total_aprt_power': 1617.762,
+    'user_calibrated_phase': []
+}
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+<span class="ansi1 ansi32">**********************</span>
+<span class="ansi1 ansi32">****** EKF step ******</span>
+<span class="ansi1 ansi32">**********************</span>
+
+<span class="ansi1">[</span><span class="ansi1">[</span><span class="ansi1 ansi36">1283.9</span>          <span class="ansi1 ansi36">12.4</span>         <span class="ansi1 ansi36">146.8</span>       <span class="ansi1">]</span>
+ <span class="ansi1">[</span><span class="ansi1 ansi36">1273.74755394</span>   <span class="ansi1 ansi36">35.68248889</span>  <span class="ansi1 ansi36">146.91443982</span><span class="ansi1">]</span><span class="ansi1">]</span>
+<span class="ansi1 ansi32">EKF state</span>
+Devices:
+ - switch.svetlo_kuchyne_l1:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.03706379342674</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.svetlo_kuchyne_l2:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.03706379342668</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.vypinac_ema_right:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">10.0</span>
+     consumption off: <span class="ansi1 ansi36">34.72114716201445</span>
+ - climate.loznice:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796123370888003</span>
+ - climate.obyvak:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796123370888003</span>
+ - climate.pokojicek:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796123370888001</span>
+Group residuals:
+ - Phase A:
+     residual: <span class="ansi1 ansi31">1052.9409493578917</span>
+ - Phase B:
+     residual: <span class="ansi1 ansi32">16.612784722473</span>
+ - Phase C:
+     residual: <span class="ansi1 ansi31">146.80184628404808</span>
+
+<span class="ansi1 ansi32">Measurements</span>
+ - Phase A:
+     measurement: <span class="ansi1 ansi36">1283.9</span>
+     prediction: <span class="ansi1 ansi36">1273.7475539421237</span>
+     innovation: <span class="ansi1 ansi36">10.152446057876432</span>
+ - Phase B:
+     measurement: <span class="ansi1 ansi36">12.4</span>
+     prediction: <span class="ansi1 ansi36">35.68248888521343</span>
+     innovation: <span class="ansi1 ansi36">-23.282488885213432</span>
+ - Phase C:
+     measurement: <span class="ansi1 ansi36">146.8</span>
+     prediction: <span class="ansi1 ansi36">146.91443982445537</span>
+     innovation: <span class="ansi1 ansi36">-0.11443982445535994</span>
+
+<span class="ansi1 ansi31">Warnings:</span>
+ - High residual in group Phase A
+ - High residual in group Phase C
+
+Duration: 77.79939007759094
+{
+    'id': 0,
+    'a_current': 1.067,
+    'a_voltage': 235.8,
+    'a_act_power': 236.9,
+    'a_aprt_power': 251.9,
+    'a_pf': 0.94,
+    'a_freq': 50.0,
+    'b_current': 0.524,
+    'b_voltage': 233.4,
+    'b_act_power': 12.3,
+    'b_aprt_power': 122.5,
+    'b_pf': 0.1,
+    'b_freq': 50.0,
+    'c_current': 0.857,
+    'c_voltage': 236.3,
+    'c_act_power': 148.1,
+    'c_aprt_power': 202.5,
+    'c_pf': 0.73,
+    'c_freq': 50.0,
+    'n_current': None,
+    'total_current': 2.448,
+    'total_act_power': 397.316,
+    'total_aprt_power': 576.847,
+    'user_calibrated_phase': []
+}
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+<span class="ansi1 ansi32">**********************</span>
+<span class="ansi1 ansi32">****** EKF step ******</span>
+<span class="ansi1 ansi32">**********************</span>
+
+<span class="ansi1">[</span><span class="ansi1">[</span> <span class="ansi1 ansi36">236.9</span>          <span class="ansi1 ansi36">12.3</span>         <span class="ansi1 ansi36">148.1</span>       <span class="ansi1">]</span>
+ <span class="ansi1">[</span><span class="ansi1 ansi36">1283.73622411</span>   <span class="ansi1 ansi36">12.77558539</span>  <span class="ansi1 ansi36">146.80184628</span><span class="ansi1">]</span><span class="ansi1">]</span>
+<span class="ansi1 ansi32">EKF state</span>
+Devices:
+ - switch.svetlo_kuchyne_l1:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.00273559260442</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.svetlo_kuchyne_l2:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.00273559260438</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.vypinac_ema_right:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">10.0</span>
+     consumption off: <span class="ansi1 ansi36">34.68681896119214</span>
+ - climate.loznice:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796107775334079</span>
+ - climate.obyvak:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796107775334079</span>
+ - climate.pokojicek:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796107775334077</span>
+Group residuals:
+ - Phase A:
+     residual: <span class="ansi1 ansi32">23.094924688561377</span>
+ - Phase B:
+     residual: <span class="ansi1 ansi32">17.08065134019244</span>
+ - Phase C:
+     residual: <span class="ansi1 ansi31">148.07905658708296</span>
+
+<span class="ansi1 ansi32">Measurements</span>
+ - Phase A:
+     measurement: <span class="ansi1 ansi36">236.9</span>
+     prediction: <span class="ansi1 ansi36">1283.7362241067594</span>
+     innovation: <span class="ansi1 ansi36">-1046.8362241067593</span>
+ - Phase B:
+     measurement: <span class="ansi1 ansi36">12.3</span>
+     prediction: <span class="ansi1 ansi36">12.775585390191008</span>
+     innovation: <span class="ansi1 ansi36">-0.4755853901910072</span>
+ - Phase C:
+     measurement: <span class="ansi1 ansi36">148.1</span>
+     prediction: <span class="ansi1 ansi36">146.80184628404808</span>
+     innovation: <span class="ansi1 ansi36">1.298153715951912</span>
+
+<span class="ansi1 ansi31">Warnings:</span>
+ - High residual in group Phase C
+
+Duration: 82.80897116661072
+{
+    'id': 0,
+    'a_current': 1.038,
+    'a_voltage': 236.6,
+    'a_act_power': 230.1,
+    'a_aprt_power': 245.9,
+    'a_pf': 0.93,
+    'a_freq': 50.0,
+    'b_current': 0.522,
+    'b_voltage': 232.1,
+    'b_act_power': 11.5,
+    'b_aprt_power': 121.3,
+    'b_pf': 0.1,
+    'b_freq': 50.0,
+    'c_current': 0.834,
+    'c_voltage': 236.7,
+    'c_act_power': 147.5,
+    'c_aprt_power': 197.5,
+    'c_pf': 0.74,
+    'c_freq': 50.0,
+    'n_current': None,
+    'total_current': 2.394,
+    'total_act_power': 389.073,
+    'total_aprt_power': 564.701,
+    'user_calibrated_phase': []
+}
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+<span class="ansi1 ansi32">**********************</span>
+<span class="ansi1 ansi32">****** EKF step ******</span>
+<span class="ansi1 ansi32">**********************</span>
+
+<span class="ansi1">[</span><span class="ansi1">[</span><span class="ansi1 ansi36">230.1</span>         <span class="ansi1 ansi36">11.5</span>        <span class="ansi1 ansi36">147.5</span>       <span class="ansi1">]</span>
+ <span class="ansi1">[</span><span class="ansi1 ansi36">253.78721483</span>  <span class="ansi1 ansi36">12.30767199</span> <span class="ansi1 ansi36">148.07905659</span><span class="ansi1">]</span><span class="ansi1">]</span>
+<span class="ansi1 ansi32">EKF state</span>
+Devices:
+ - switch.svetlo_kuchyne_l1:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.00195883359567</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.svetlo_kuchyne_l2:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.00195883359562</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.vypinac_ema_right:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">10.0</span>
+     consumption off: <span class="ansi1 ansi36">34.68604220218337</span>
+ - climate.loznice:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796081289886319</span>
+ - climate.obyvak:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796081289886319</span>
+ - climate.pokojicek:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796081289886317</span>
+Group residuals:
+ - Phase A:
+     residual: <span class="ansi1 ansi32">0.20784557436999052</span>
+ - Phase B:
+     residual: <span class="ansi1 ansi32">17.87521477300901</span>
+ - Phase C:
+     residual: <span class="ansi1 ansi31">147.5093420532997</span>
+
+<span class="ansi1 ansi32">Measurements</span>
+ - Phase A:
+     measurement: <span class="ansi1 ansi36">230.1</span>
+     prediction: <span class="ansi1 ansi36">253.78721483496233</span>
+     innovation: <span class="ansi1 ansi36">-23.687214834962333</span>
+ - Phase B:
+     measurement: <span class="ansi1 ansi36">11.5</span>
+     prediction: <span class="ansi1 ansi36">12.307671985809797</span>
+     innovation: <span class="ansi1 ansi36">-0.8076719858097974</span>
+ - Phase C:
+     measurement: <span class="ansi1 ansi36">147.5</span>
+     prediction: <span class="ansi1 ansi36">148.07905658708296</span>
+     innovation: <span class="ansi1 ansi36">-0.5790565870829596</span>
+
+<span class="ansi1 ansi31">Warnings:</span>
+ - High residual in group Phase C
+
+Duration: 89.77780103683472
+{
+    'id': 0,
+    'a_current': 1.036,
+    'a_voltage': 237.0,
+    'a_act_power': 230.0,
+    'a_aprt_power': 245.8,
+    'a_pf': 0.93,
+    'a_freq': 50.0,
+    'b_current': 0.521,
+    'b_voltage': 232.5,
+    'b_act_power': 11.0,
+    'b_aprt_power': 121.3,
+    'b_pf': 0.1,
+    'b_freq': 50.0,
+    'c_current': 0.86,
+    'c_voltage': 236.3,
+    'c_act_power': 147.8,
+    'c_aprt_power': 203.4,
+    'c_pf': 0.73,
+    'c_freq': 50.0,
+    'n_current': None,
+    'total_current': 2.417,
+    'total_act_power': 388.77,
+    'total_aprt_power': 570.454,
+    'user_calibrated_phase': []
+}
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+<span class="ansi1 ansi32">**********************</span>
+<span class="ansi1 ansi32">****** EKF step ******</span>
+<span class="ansi1 ansi32">**********************</span>
+
+<span class="ansi1">[</span><span class="ansi1">[</span><span class="ansi1 ansi36">230</span>.          <span class="ansi1 ansi36">11</span>.         <span class="ansi1 ansi36">147.8</span>       <span class="ansi1">]</span>
+ <span class="ansi1">[</span><span class="ansi1 ansi36">230.4821143</span>   <span class="ansi1 ansi36">11.5130291</span>  <span class="ansi1 ansi36">147.50934205</span><span class="ansi1">]</span><span class="ansi1">]</span>
+<span class="ansi1 ansi32">EKF state</span>
+Devices:
+ - switch.svetlo_kuchyne_l1:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.00194302394372</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.svetlo_kuchyne_l2:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.00194302394368</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.vypinac_ema_right:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">10.0</span>
+     consumption off: <span class="ansi1 ansi36">34.68602639253144</span>
+ - climate.loznice:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796064466465948</span>
+ - climate.obyvak:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796064466465948</span>
+ - climate.pokojicek:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796064466465946</span>
+Group residuals:
+ - Phase A:
+     residual: <span class="ansi1 ansi32">0.6821351324815894</span>
+ - Phase B:
+     residual: <span class="ansi1 ansi32">18.379917384131836</span>
+ - Phase C:
+     residual: <span class="ansi1 ansi31">147.79531074839554</span>
+
+<span class="ansi1 ansi32">Measurements</span>
+ - Phase A:
+     measurement: <span class="ansi1 ansi36">230.0</span>
+     prediction: <span class="ansi1 ansi36">230.48211429500466</span>
+     innovation: <span class="ansi1 ansi36">-0.4821142950046635</span>
+ - Phase B:
+     measurement: <span class="ansi1 ansi36">11.0</span>
+     prediction: <span class="ansi1 ansi36">11.513029096649944</span>
+     innovation: <span class="ansi1 ansi36">-0.5130290966499444</span>
+ - Phase C:
+     measurement: <span class="ansi1 ansi36">147.8</span>
+     prediction: <span class="ansi1 ansi36">147.5093420532997</span>
+     innovation: <span class="ansi1 ansi36">0.2906579467003212</span>
+
+<span class="ansi1 ansi31">Warnings:</span>
+ - High residual in group Phase C
+
+Duration: 94.78019714355469
+{
+    'id': 0,
+    'a_current': 5.454,
+    'a_voltage': 235.7,
+    'a_act_power': 1284.6,
+    'a_aprt_power': 1286.6,
+    'a_pf': 1.0,
+    'a_freq': 50.0,
+    'b_current': 0.517,
+    'b_voltage': 233.0,
+    'b_act_power': 11.0,
+    'b_aprt_power': 120.5,
+    'b_pf': 0.09,
+    'b_freq': 50.0,
+    'c_current': 0.861,
+    'c_voltage': 236.1,
+    'c_act_power': 146.7,
+    'c_aprt_power': 203.4,
+    'c_pf': 0.73,
+    'c_freq': 50.0,
+    'n_current': None,
+    'total_current': 6.831,
+    'total_act_power': 1442.319,
+    'total_aprt_power': 1610.512,
+    'user_calibrated_phase': []
+}
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+<span class="ansi1 ansi32">**********************</span>
+<span class="ansi1 ansi32">****** EKF step ******</span>
+<span class="ansi1 ansi32">**********************</span>
+
+<span class="ansi1">[</span><span class="ansi1">[</span><span class="ansi1 ansi36">1284.6</span>          <span class="ansi1 ansi36">11</span>.          <span class="ansi1 ansi36">146.7</span>       <span class="ansi1">]</span>
+ <span class="ansi1">[</span> <span class="ansi1 ansi36">230.00777731</span>   <span class="ansi1 ansi36">11.00827602</span>  <span class="ansi1 ansi36">147.79531075</span><span class="ansi1">]</span><span class="ansi1">]</span>
+<span class="ansi1 ansi32">EKF state</span>
+Devices:
+ - switch.svetlo_kuchyne_l1:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.03652556204524</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.svetlo_kuchyne_l2:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.0365255620452</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.vypinac_ema_right:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">10.0</span>
+     consumption off: <span class="ansi1 ansi36">34.720608930632956</span>
+ - climate.loznice:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.79606419507611</span>
+ - climate.obyvak:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.79606419507611</span>
+ - climate.pokojicek:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796064195076108</span>
+Group residuals:
+ - Phase A:
+     residual: <span class="ansi1 ansi31">1036.7940079130362</span>
+ - Phase B:
+     residual: <span class="ansi1 ansi32">18.388059079294393</span>
+ - Phase C:
+     residual: <span class="ansi1 ansi31">146.71767090059845</span>
+
+<span class="ansi1 ansi32">Measurements</span>
+ - Phase A:
+     measurement: <span class="ansi1 ansi36">1284.6</span>
+     prediction: <span class="ansi1 ansi36">230.00777730793726</span>
+     innovation: <span class="ansi1 ansi36">1054.5922226920627</span>
+ - Phase B:
+     measurement: <span class="ansi1 ansi36">11.0</span>
+     prediction: <span class="ansi1 ansi36">11.008276015266006</span>
+     innovation: <span class="ansi1 ansi36">-0.008276015266005743</span>
+ - Phase C:
+     measurement: <span class="ansi1 ansi36">146.7</span>
+     prediction: <span class="ansi1 ansi36">147.79531074839554</span>
+     innovation: <span class="ansi1 ansi36">-1.0953107483955478</span>
+
+<span class="ansi1 ansi31">Warnings:</span>
+ - High residual in group Phase A
+ - High residual in group Phase C
+
+Duration: 100.78366208076477
+{
+    'id': 0,
+    'a_current': 5.454,
+    'a_voltage': 235.1,
+    'a_act_power': 1283.1,
+    'a_aprt_power': 1283.6,
+    'a_pf': 1.0,
+    'a_freq': 50.0,
+    'b_current': 0.518,
+    'b_voltage': 232.6,
+    'b_act_power': 11.3,
+    'b_aprt_power': 120.6,
+    'b_pf': 0.09,
+    'b_freq': 50.0,
+    'c_current': 0.853,
+    'c_voltage': 236.5,
+    'c_act_power': 147.0,
+    'c_aprt_power': 201.8,
+    'c_pf': 0.73,
+    'c_freq': 50.0,
+    'n_current': None,
+    'total_current': 6.825,
+    'total_act_power': 1441.377,
+    'total_aprt_power': 1605.936,
+    'user_calibrated_phase': []
+}
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+<span class="ansi1 ansi32">**********************</span>
+<span class="ansi1 ansi32">****** EKF step ******</span>
+<span class="ansi1 ansi32">**********************</span>
+
+<span class="ansi1">[</span><span class="ansi1">[</span><span class="ansi1 ansi36">1283.1</span>          <span class="ansi1 ansi36">11.3</span>         <span class="ansi1 ansi36">147</span>.        <span class="ansi1">]</span>
+ <span class="ansi1">[</span><span class="ansi1 ansi36">1267.58766797</span>   <span class="ansi1 ansi36">11.00013351</span>  <span class="ansi1 ansi36">146.7176709</span> <span class="ansi1">]</span><span class="ansi1">]</span>
+<span class="ansi1 ansi32">EKF state</span>
+Devices:
+ - switch.svetlo_kuchyne_l1:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.03703424758454</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.svetlo_kuchyne_l2:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.0370342475845</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.vypinac_ema_right:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">10.0</span>
+     consumption off: <span class="ansi1 ansi36">34.721117616172265</span>
+ - climate.loznice:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796074028397685</span>
+ - climate.obyvak:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796074028397685</span>
+ - climate.pokojicek:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796074028397683</span>
+Group residuals:
+ - Phase A:
+     residual: <span class="ansi1 ansi31">1052.054574092225</span>
+ - Phase B:
+     residual: <span class="ansi1 ansi32">18.093059432039183</span>
+ - Phase C:
+     residual: <span class="ansi1 ansi31">146.9954451196075</span>
+
+<span class="ansi1 ansi32">Measurements</span>
+ - Phase A:
+     measurement: <span class="ansi1 ansi36">1283.1</span>
+     prediction: <span class="ansi1 ansi36">1267.5876679677597</span>
+     innovation: <span class="ansi1 ansi36">15.512332032240238</span>
+ - Phase B:
+     measurement: <span class="ansi1 ansi36">11.3</span>
+     prediction: <span class="ansi1 ansi36">11.000133505933931</span>
+     innovation: <span class="ansi1 ansi36">0.2998664940660696</span>
+ - Phase C:
+     measurement: <span class="ansi1 ansi36">147.0</span>
+     prediction: <span class="ansi1 ansi36">146.71767090059845</span>
+     innovation: <span class="ansi1 ansi36">0.2823290994015508</span>
+
+<span class="ansi1 ansi31">Warnings:</span>
+ - High residual in group Phase A
+ - High residual in group Phase C
+
+Duration: 109.8014349937439
+{
+    'id': 0,
+    'a_current': 1.04,
+    'a_voltage': 236.6,
+    'a_act_power': 230.6,
+    'a_aprt_power': 246.3,
+    'a_pf': 0.94,
+    'a_freq': 50.0,
+    'b_current': 0.519,
+    'b_voltage': 232.3,
+    'b_act_power': 9.6,
+    'b_aprt_power': 120.6,
+    'b_pf': 0.08,
+    'b_freq': 50.0,
+    'c_current': 0.845,
+    'c_voltage': 236.3,
+    'c_act_power': 147.9,
+    'c_aprt_power': 199.6,
+    'c_pf': 0.74,
+    'c_freq': 50.0,
+    'n_current': None,
+    'total_current': 2.404,
+    'total_act_power': 388.047,
+    'total_aprt_power': 566.535,
+    'user_calibrated_phase': []
+}
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+<span class="ansi1 ansi32">**********************</span>
+<span class="ansi1 ansi32">****** EKF step ******</span>
+<span class="ansi1 ansi32">**********************</span>
+
+<span class="ansi1">[</span><span class="ansi1">[</span> <span class="ansi1 ansi36">230.6</span>           <span class="ansi1 ansi36">9.6</span>         <span class="ansi1 ansi36">147.9</span>       <span class="ansi1">]</span>
+ <span class="ansi1">[</span><span class="ansi1 ansi36">1282.8497602</span>    <span class="ansi1 ansi36">11.29516265</span>  <span class="ansi1 ansi36">146.99544512</span><span class="ansi1">]</span><span class="ansi1">]</span>
+<span class="ansi1 ansi32">EKF state</span>
+Devices:
+ - switch.svetlo_kuchyne_l1:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.00252852429023</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.svetlo_kuchyne_l2:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.00252852429018</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.vypinac_ema_right:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">10.0</span>
+     consumption off: <span class="ansi1 ansi36">34.68661189287795</span>
+ - climate.loznice:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796018440061474</span>
+ - climate.obyvak:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796018440061474</span>
+ - climate.pokojicek:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796018440061472</span>
+Group residuals:
+ - Phase A:
+     residual: <span class="ansi1 ansi32">16.882875262681637</span>
+ - Phase B:
+     residual: <span class="ansi1 ansi32">19.760709518382004</span>
+ - Phase C:
+     residual: <span class="ansi1 ansi31">147.88540660775885</span>
+
+<span class="ansi1 ansi32">Measurements</span>
+ - Phase A:
+     measurement: <span class="ansi1 ansi36">230.6</span>
+     prediction: <span class="ansi1 ansi36">1282.8497602035663</span>
+     innovation: <span class="ansi1 ansi36">-1052.2497602035664</span>
+ - Phase B:
+     measurement: <span class="ansi1 ansi36">9.6</span>
+     prediction: <span class="ansi1 ansi36">11.29516265315387</span>
+     innovation: <span class="ansi1 ansi36">-1.6951626531538704</span>
+ - Phase C:
+     measurement: <span class="ansi1 ansi36">147.9</span>
+     prediction: <span class="ansi1 ansi36">146.9954451196075</span>
+     innovation: <span class="ansi1 ansi36">0.9045548803925101</span>
+
+<span class="ansi1 ansi31">Warnings:</span>
+ - High residual in group Phase C
+
+Duration: 113.87772226333618
+{
+    'id': 0,
+    'a_current': 1.024,
+    'a_voltage': 236.9,
+    'a_act_power': 228.0,
+    'a_aprt_power': 242.8,
+    'a_pf': 0.94,
+    'a_freq': 50.0,
+    'b_current': 0.583,
+    'b_voltage': 232.5,
+    'b_act_power': 32.1,
+    'b_aprt_power': 135.8,
+    'b_pf': 0.24,
+    'b_freq': 50.0,
+    'c_current': 0.863,
+    'c_voltage': 236.2,
+    'c_act_power': 147.8,
+    'c_aprt_power': 203.8,
+    'c_pf': 0.72,
+    'c_freq': 50.0,
+    'n_current': None,
+    'total_current': 2.47,
+    'total_act_power': 407.847,
+    'total_aprt_power': 582.398,
+    'user_calibrated_phase': []
+}
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+Device switch.svetlo_kuchyne_l1 has 0th group
+Device switch.svetlo_kuchyne_l2 has 0th group
+Device switch.vypinac_ema_right has 0th group
+Device climate.loznice has 1th group
+Device climate.obyvak has 1th group
+Device climate.pokojicek has 1th group
+<span class="ansi1 ansi32">**********************</span>
+<span class="ansi1 ansi32">****** EKF step ******</span>
+<span class="ansi1 ansi32">**********************</span>
+
+<span class="ansi1">[</span><span class="ansi1">[</span><span class="ansi1 ansi36">228</span>.          <span class="ansi1 ansi36">32.1</span>        <span class="ansi1 ansi36">147.8</span>       <span class="ansi1">]</span>
+ <span class="ansi1">[</span><span class="ansi1 ansi36">247.5745442</span>    <span class="ansi1 ansi36">9.6273458</span>  <span class="ansi1 ansi36">147.88540661</span><span class="ansi1">]</span><span class="ansi1">]</span>
+<span class="ansi1 ansi32">EKF state</span>
+Devices:
+ - switch.svetlo_kuchyne_l1:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.00188662934146</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.svetlo_kuchyne_l2:
+     state: <span class="ansi1 ansi36">1.0</span>
+     consumption on: <span class="ansi1 ansi36">98.00188662934141</span>
+     consumption off: <span class="ansi1 ansi36">0.0</span>
+ - switch.vypinac_ema_right:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">10.0</span>
+     consumption off: <span class="ansi1 ansi36">34.68596999792918</span>
+ - climate.loznice:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796755370794822</span>
+ - climate.obyvak:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.796755370794822</span>
+ - climate.pokojicek:
+     state: <span class="ansi1 ansi36">0.0</span>
+     consumption on: <span class="ansi1 ansi36">500.0</span>
+     consumption off: <span class="ansi1 ansi36">9.79675537079482</span>
+Group residuals:
+ - Phase A:
+     residual: <span class="ansi1 ansi32">2.3739732004565646</span>
+ - Phase B:
+     residual: <span class="ansi1 ansi32">2.3472124820531803</span>
+ - Phase C:
+     residual: <span class="ansi1 ansi31">147.8013778844756</span>
+
+<span class="ansi1 ansi32">Measurements</span>
+ - Phase A:
+     measurement: <span class="ansi1 ansi36">228.0</span>
+     prediction: <span class="ansi1 ansi36">247.57454420413998</span>
+     innovation: <span class="ansi1 ansi36">-19.574544204139983</span>
+ - Phase B:
+     measurement: <span class="ansi1 ansi36">32.1</span>
+     prediction: <span class="ansi1 ansi36">9.627345801802417</span>
+     innovation: <span class="ansi1 ansi36">22.472654198197585</span>
+ - Phase C:
+     measurement: <span class="ansi1 ansi36">147.8</span>
+     prediction: <span class="ansi1 ansi36">147.88540660775885</span>
+     innovation: <span class="ansi1 ansi36">-0.08540660775884135</span>
+
+<span class="ansi1 ansi31">Warnings:</span>
+ - High residual in group Phase C
+
+Duration: 120.79928207397461
+Cancelling Home Assistant task
+
+</pre>
+</body>
+
+</html>

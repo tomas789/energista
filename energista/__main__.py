@@ -3,6 +3,7 @@ import asyncio
 from collections import OrderedDict
 from dataclasses import dataclass
 from pathlib import Path
+import time
 from dotenv import load_dotenv
 
 import autograd.numpy as np
@@ -17,11 +18,11 @@ from .mqtt import MqttClient
 
 load_dotenv()
 
-console = Console()
+console = Console(force_terminal=True)
 
 
 BANNER = """
-[bold green]Prototype B[/bold green]
+[bold green]Energista[/bold green]
 
 [italic]
 This script estimates consumption of individual devices based on 
@@ -155,7 +156,7 @@ class Ekf:
         to the command `u_k`.
 
         The function `h` is the measurement function. It creates the measurement vector `z_k` from the state.
-        It is a function that has the state vector `x_k` as an argument and based on that it calculates the consumption 
+        It is a function that has the state vector `x_k` as an argument and based on that it calculates the consumption
         of each group we can expect. It is a 'prediction' we make for the measurement we already have (`measurement`).
 
         The rest is just the Kalman filter magic.
@@ -213,7 +214,7 @@ class Ekf:
     def _dump_device_infos(self) -> None:
         """Dump the current estimate of the device info to a file.
 
-        The file is then used by `load_device_infos` which is then fed to the EKF to create 
+        The file is then used by `load_device_infos` which is then fed to the EKF to create
         the initial state of next EKF run (i.e. after program restart).
         """
         device_infos = []
@@ -279,10 +280,16 @@ class Ekf:
                 console.print(f" - {warning}")
             console.print()
 
-    async def run(self, ha: HomeAssistantState, mqtt: MqttClient):
+    async def run(self, ha: HomeAssistantState, mqtt: MqttClient, timeout: int | None = None):
+        t = time.time()
         while True:
             async for message in mqtt.collect_measurements():
                 self.ekf_step(message, ha.states)
+
+                duration = time.time() - t
+                print(f"Duration: {duration}")
+                if timeout is not None and duration > timeout:
+                    return
 
 
 def load_device_infos(config: c.Config, device_infos_path: Path) -> list[DeviceInfo]:
@@ -324,6 +331,7 @@ async def main():
     console.print(BANNER)
 
     parser = argparse.ArgumentParser()
+    parser.add_argument("-t", "--timeout", type=int)
     parser.add_argument("config", type=str)
     args = parser.parse_args()
 
@@ -346,10 +354,10 @@ async def main():
     ekf = Ekf(config, device_infos, device_infos_path)
 
     async with ha, mqtt:
-        await asyncio.gather(
-            ha.collect_states(),
-            ekf.run(ha, mqtt),
-        )
+        ha_task = asyncio.create_task(ha.collect_states())
+        await ekf.run(ha, mqtt, timeout=args.timeout)
+        print("Cancelling Home Assistant task")
+        ha_task.cancel()
 
 
 if __name__ == "__main__":
