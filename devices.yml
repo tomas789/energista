@@ -1,0 +1,47 @@
+devices:
+- entity_id: switch.svetlo_kuchyne_l1
+  group: Phase A
+  consumption_on: 10 ± 3
+  consumption_off: 0 ± 0.01
+- entity_id: switch.svetlo_kuchyne_l2
+  group: Phase A
+  consumption_on: 10 ± 3
+  consumption_off: 0 ± 0.01
+- entity_id: switch.vypinac_ema_right
+  group: Phase A
+  consumption_on: 10 ± 3
+  consumption_off: 0 ± 0.01
+- entity_id: climate.loznice
+  group: Phase B
+  consumption_on: 500 ± 100
+  consumption_off: 10 ± 1
+- entity_id: climate.obyvak
+  group: Phase B
+  consumption_on: 500 ± 100
+  consumption_off: 10 ± 1
+- entity_id: climate.pokojicek
+  group: Phase B
+  consumption_on: 500 ± 100
+  consumption_off: 10 ± 1
+
+groups:
+- name: Phase A
+  measurement_field: a_act_power
+- name: Phase B
+  measurement_field: b_act_power
+- name: Phase C
+  measurement_field: c_act_power
+
+measurement:
+  mqtt_host: 192.168.1.4
+  mqtt_username: ${MQTT_USERNAME}
+  mqtt_password: ${MQTT_PASSWORD}
+  mqtt_topic: "shellypro3em-mqtt/status/em:0"
+
+
+home_assistant:
+  api_url: homeassistant.local:8123
+  api_token: ${HOME_ASSISTANT_API_TOKEN}
+
+ekf:
+  max_residual: 100

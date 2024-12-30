@@ -1,0 +1,4 @@
+{
+    "ruff.organizeImports": true,
+    "ruff.lineLength": 127
+}
