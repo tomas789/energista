@@ -121,11 +121,12 @@ class Ekf:
                 device_info.consumption_off_error,
             ]
         for i, group in enumerate(self.config.groups):
-            P_0_diag[3 * self.n_devices + i] = 300
+            P_0_diag[3 * self.n_devices + i] = 0
 
         P_0 = np.diag(P_0_diag)
 
-        self.Q: np.ndarray = np.diag((3 * self.n_devices) * [0.01] + self.n_groups * [300])
+        Q_residual = [0.1 if g.residual else 0.0 for g in self.config.groups]
+        self.Q: np.ndarray = np.diag((3 * self.n_devices) * [0.01] + Q_residual)
         """Process noise covariance matrix"""
 
         self.x_k1: np.ndarray = x_0

@@ -56,6 +56,9 @@ class Group(BaseModel):
     measurement_field: str
     """Measurement field from Shelly device."""
 
+    residual: bool
+    """Whether to use residual in the EKF."""
+
 
 class HomeAssistant(BaseModel):
     """Configuration of the `HomeAssistant` class."""
